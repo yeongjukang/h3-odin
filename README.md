@@ -10,6 +10,6 @@
 - Run basic examples after installation
 ```bash
 # run basic tests
-cd ../../examples
+cd examples
 odin test .
 ```
