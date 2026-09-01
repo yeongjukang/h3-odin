@@ -2,7 +2,7 @@ package examples
 import h3 "../"
 
 import "core:math"
-import "core:runtime"
+import "base:runtime"
 import "core:fmt"
 
 R :: 6371.0088
@@ -17,22 +17,24 @@ haversineDistance :: proc(th1, ph1, th2, ph2: f64) -> f64{
 
 distance :: proc() {
     h3HQ1, h3HQ2: h3.Index 
-    h3.stringToH3("8f2830828052d25", &h3HQ1)
-    h3.stringToH3("8f283082a30e623", &h3HQ2)
+    assert_success(h3.stringToH3("8f2830828052d25", &h3HQ1))
+    assert_success(h3.stringToH3("8f283082a30e623", &h3HQ2))
 
     geoHQ1, geoHQ2: h3.LatLng
-    h3.cellToLatLng(h3HQ1, &geoHQ1)
-    h3.cellToLatLng(h3HQ2, &geoHQ2)
+    assert_success(h3.cellToLatLng(h3HQ1, &geoHQ1))
+    assert_success(h3.cellToLatLng(h3HQ2, &geoHQ2))
 
     distance: i64
-    runtime.assert(h3.gridDistance(h3HQ1, h3HQ2, &distance) == u32(h3.error_codes.E_SUCCESS))
+    runtime.assert(h3.gridDistance(h3HQ1, h3HQ2, &distance) == .E_SUCCESS)
 
+    geoHQ1Deg := h3.lat_lng_to_degrees(geoHQ1)
+    geoHQ2Deg := h3.lat_lng_to_degrees(geoHQ2)
     fmt.printf( "origin: (%.6f, %.6f)\n" +
         "destination: (%.6f, %.6f)\n" +
         "grid distance: %d\n" +
         "distance in km: %.6fkm\n", +
-        h3.radsToDegs(geoHQ1.lat), h3.radsToDegs(geoHQ1.lng),
-        h3.radsToDegs(geoHQ2.lat), h3.radsToDegs(geoHQ2.lng),
+        geoHQ1Deg.lat, geoHQ1Deg.lng,
+        geoHQ2Deg.lat, geoHQ2Deg.lng,
         distance,
         haversineDistance(geoHQ1.lat, geoHQ1.lng, geoHQ2.lat, geoHQ2.lng))
     

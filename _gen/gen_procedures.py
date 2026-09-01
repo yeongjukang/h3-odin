@@ -1,4 +1,4 @@
-# usage : python ./gen_procedures.py > procedures.odin
+# usage: python3 ./gen_procedures.py > ../procedures.odin
 import re
 
 f_src = open("h3api.h", "r")
@@ -13,12 +13,19 @@ package h3
 import c "core:c"
 
 Index :: u64
-Error :: u32
 
-foreign import h3api "_gen/libh3.a"
+when ODIN_OS == .Darwin && ODIN_ARCH == .amd64 {
+	foreign import lib "_gen/libh3_darwin_amd64.a"
+} else when ODIN_OS == .Darwin && ODIN_ARCH == .arm64 {
+	foreign import lib "_gen/libh3_darwin_arm64.a"
+} else when ODIN_OS == .Linux && ODIN_ARCH == .amd64 {
+	foreign import lib "_gen/libh3_linux_amd64.a"
+} else when ODIN_OS == .Linux && ODIN_ARCH == .arm64 {
+	foreign import lib "_gen/libh3_linux_arm64.a"
+}
 
 @(default_calling_convention="c")
-foreign h3api {
+foreign lib {
 '''
 
 print(header)
@@ -44,21 +51,21 @@ for line in f_src:
 
 def convert_type(t):
     if t == 'int':
-        return 'int'
+        return 'c.int'
     elif t == 'H3Error':
         return 'Error'
     elif t == 'double':
-        return 'f64'
+        return 'c.double'
     elif t == 'void':
         return ''
     elif t == 'int64_t':
-        return 'i64'
+        return 'c.int64_t'
     elif t == 'H3Index':
         return 'Index'
     elif t == 'uint32_t':
-        return 'u32'
+        return 'c.uint32_t'
     elif t == 'size_t':
-        return 'u64'
+        return 'c.size_t'
     else:
         return t
 
@@ -70,7 +77,8 @@ def get_return_type(t):
 
 def get_args_types(args):
     result = ''
-    if args[0] == '':
+    # C headers may spell an empty parameter list as either () or (void).
+    if len(args) == 1 and args[0].strip() in ('', 'void'):
         return result
     for arg in args:
         tokens = arg.lstrip().split(' ')
@@ -99,7 +107,7 @@ for l in lines:
                 ).replace('DECLSPEC ', ''
                 ).replace(');', ''
                 ).replace('const char *','cstring '
-                ).replace('char *','[]u8 '
+                ).replace('char *','^c.char '
                 ).replace('H3_EXPORT',''
                 ).replace(')',''
                 ).replace('const ', '$'
